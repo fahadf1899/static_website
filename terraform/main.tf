@@ -22,7 +22,7 @@ variable ami_id {
 variable instance_type {
     description = "The type of EC2 instance to create"
     type        = string
-    default     = "t2.micro"
+    default     = "t3.small"
 }
 
 variable key_name {
@@ -49,13 +49,20 @@ resource "aws_security_group" "allow_ssh" {
         to_port     = 22
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
-    }
+    ingress {
+    description = "HTTP"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  
     egress {
         from_port   = 0
         to_port     = 0
         protocol    = "-1"
         cidr_blocks = ["0.0.0.0/0"]
     }
+  }
 }
 
 resource "aws_instance" "web_server" {
@@ -69,16 +76,15 @@ resource "aws_instance" "web_server" {
         Name = "MyServer"
     }
 
-    user_data = <<-EOF
-                #!/bin/bash
-                sudo apt-get update -y
-                sudo apt-get install -y nginx
-                sudo systemctl start nginx
-                sudo systemctl enable nginx
-            EOF
+      user_data = <<-EOT
+    #!/bin/bash
+    apt-get update -y
+    apt-get install -y nginx
+    systemctl enable --now nginx
+  EOT
 }
 
-output "instance_public_ip" {
+output "public_ip" {
     description = "The public IP address of the EC2 instance"
     value       = aws_instance.web_server.public_ip
 }
