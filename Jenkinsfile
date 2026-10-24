@@ -42,13 +42,12 @@ pipeline {
     stage('Terraform Apply') {
       steps { dir('terraform') { sh 'terraform apply -input=false -auto-approve tfplan' } }
     }
-
     stage('Deploy Website') {
       steps {
-        sshagent(credentials: ['my-server-key.pem']) {
+        withCredentials([sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'SSH_KEY')]) {
           sh '''
             IP=$(terraform -chdir=terraform output -raw public_ip)
-            OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5"
+            OPTS="-i $SSH_KEY -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5"
             SSH="ssh $OPTS ubuntu@$IP"
 
             # 1. wait for SSH to come up
