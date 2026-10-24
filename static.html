@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shipline | Push code, site updates itself</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = { theme: { extend: { fontFamily: { display: ['Space Grotesk','sans-serif'], sans: ['Inter','sans-serif'] } } } }
+  </script>
+  <style>
+    .grid-bg{background-image:linear-gradient(rgba(148,163,184,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.08) 1px,transparent 1px);background-size:48px 48px}
+    @media (prefers-reduced-motion:no-preference){.pulse-dot{animation:p 1.8s ease-in-out infinite}@keyframes p{50%{opacity:.35}}}
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-300 font-sans antialiased">
+
+  <header class="sticky top-0 z-20 backdrop-blur bg-slate-950/70 border-b border-white/10">
+    <nav class="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
+      <a href="#" class="font-display text-xl font-bold text-white">Shipline</a>
+      <div class="hidden sm:flex gap-8 text-sm">
+        <a href="#pipeline" class="hover:text-white">Pipeline</a>
+        <a href="#stack" class="hover:text-white">Stack</a>
+        <a href="#status" class="hover:text-white">Status</a>
+      </div>
+      <a href="https://github.com/" class="rounded-full bg-white text-slate-900 px-4 py-2 text-sm font-medium hover:bg-violet-200 transition">View repo</a>
+    </nav>
+  </header>
+
+  <section class="grid-bg relative overflow-hidden">
+    <div class="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[700px] rounded-full bg-violet-600/20 blur-3xl"></div>
+    <div class="relative max-w-4xl mx-auto px-6 py-28 sm:py-36 text-center">
+      <p class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm">
+        <span class="pulse-dot h-2 w-2 rounded-full bg-emerald-400"></span> Live on AWS EC2
+      </p>
+      <h1 class="mt-8 font-display text-5xl sm:text-7xl font-bold leading-[1.05] text-white tracking-tight">
+        Push to GitHub.<br>Your website updates itself.
+      </h1>
+      <p class="mt-6 max-w-xl mx-auto text-lg text-slate-400">
+        This page was built, provisioned and deployed by Jenkins and Terraform. No manual steps after <code class="text-violet-300">git push</code>.
+      </p>
+      <div class="mt-10 flex flex-wrap justify-center gap-4">
+        <a href="#pipeline" class="rounded-xl bg-violet-500 hover:bg-violet-400 text-white px-6 py-3 font-medium transition">See how it works</a>
+        <a href="#status" class="rounded-xl border border-white/15 hover:bg-white/10 px-6 py-3 font-medium text-white transition">Check last deploy</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="pipeline" class="max-w-6xl mx-auto px-6 py-24">
+    <h2 class="font-display text-3xl sm:text-4xl font-bold text-white">From commit to live in four steps</h2>
+    <ol class="mt-12 grid gap-6 md:grid-cols-4">
+      <li class="rounded-2xl border border-white/10 bg-white/5 p-6"><span class="font-display text-violet-300 text-sm">Step 1</span><h3 class="mt-2 text-white font-semibold">Git push</h3><p class="mt-2 text-sm">You push to the main branch on GitHub.</p></li>
+      <li class="rounded-2xl border border-white/10 bg-white/5 p-6"><span class="font-display text-violet-300 text-sm">Step 2</span><h3 class="mt-2 text-white font-semibold">Webhook fires</h3><p class="mt-2 text-sm">GitHub calls Jenkins, which starts the pipeline.</p></li>
+      <li class="rounded-2xl border border-white/10 bg-white/5 p-6"><span class="font-display text-violet-300 text-sm">Step 3</span><h3 class="mt-2 text-white font-semibold">Terraform apply</h3><p class="mt-2 text-sm">EC2, security group and NGINX are created or confirmed.</p></li>
+      <li class="rounded-2xl border border-white/10 bg-white/5 p-6"><span class="font-display text-violet-300 text-sm">Step 4</span><h3 class="mt-2 text-white font-semibold">Site updated</h3><p class="mt-2 text-sm">Website files are copied and NGINX reloads.</p></li>
+    </ol>
+  </section>
+
+  <section id="stack" class="border-y border-white/10 bg-white/[0.02]">
+    <div class="max-w-6xl mx-auto px-6 py-20">
+      <h2 class="font-display text-3xl font-bold text-white">Tools behind it</h2>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <span class="rounded-full border border-white/10 px-5 py-2 text-white">Terraform</span>
+        <span class="rounded-full border border-white/10 px-5 py-2 text-white">Jenkins</span>
+        <span class="rounded-full border border-white/10 px-5 py-2 text-white">AWS EC2</span>
+        <span class="rounded-full border border-white/10 px-5 py-2 text-white">NGINX</span>
+        <span class="rounded-full border border-white/10 px-5 py-2 text-white">GitHub Webhook</span>
+        <span class="rounded-full border border-white/10 px-5 py-2 text-white">Tailwind CSS</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="status" class="max-w-6xl mx-auto px-6 py-24">
+    <div class="rounded-3xl border border-white/10 bg-gradient-to-br from-violet-600/20 to-transparent p-10 sm:p-14">
+      <h2 class="font-display text-3xl font-bold text-white">Last deployment</h2>
+      <dl class="mt-8 grid gap-6 sm:grid-cols-3">
+        <div><dt class="text-sm text-slate-400">Build number</dt><dd class="mt-1 font-display text-2xl text-white">#__BUILD_NUMBER__</dd></div>
+        <div><dt class="text-sm text-slate-400">Commit</dt><dd class="mt-1 font-display text-2xl text-white">__GIT_COMMIT__</dd></div>
+        <div><dt class="text-sm text-slate-400">Deployed at</dt><dd class="mt-1 font-display text-2xl text-white">__DEPLOY_TIME__</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <footer class="border-t border-white/10 py-8 text-center text-sm text-slate-500">
+    Built with Terraform, Jenkins and NGINX on AWS.
+  </footer>
+</body>
+</html>
