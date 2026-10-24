@@ -48,16 +48,22 @@ pipeline {
         sshagent(credentials: ['ec2-ssh-key']) {
           sh '''
             IP=$(terraform -chdir=terraform output -raw public_ip)
-            SSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 ubuntu@$IP"
+            OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5"
+            SSH="ssh $OPTS ubuntu@$IP"
 
-            # wait until nginx is installed and running (first run only)
+            # 1. wait for SSH to come up
             for i in $(seq 1 30); do
-              $SSH 'systemctl is-active --quiet nginx' && break
-              echo "Waiting for EC2/nginx... ($i)"; sleep 10
+              $SSH 'true' && break
+              echo "Waiting for SSH... ($i)"; sleep 10
             done
 
-            scp -o StrictHostKeyChecking=no -r website/. ubuntu@$IP:/var/www/html/
-            $SSH 'sudo systemctl reload nginx'
+            # 2. wait for first-boot setup (nginx install) to finish
+            $SSH 'cloud-init status --wait'
+
+            # 3. copy files and move them into the web root
+            $SSH 'rm -rf /tmp/site && mkdir -p /tmp/site'
+            scp $OPTS -r website/. ubuntu@$IP:/tmp/site/
+            $SSH 'sudo cp -r /tmp/site/. /var/www/html/ && sudo systemctl reload nginx'
           '''
         }
       }
@@ -67,14 +73,15 @@ pipeline {
       steps {
         sh '''
           IP=$(terraform -chdir=terraform output -raw public_ip)
-          curl -fsS -o /dev/null -w "HTTP %{http_code}\\n" http://$IP
+          curl -fsS --retry 5 --retry-delay 5 --retry-connrefused -o /dev/null -w "HTTP %{http_code}\\n" http://$IP
+          echo "Website is live at: http://$IP"
         '''
       }
     }
   }
 
   post {
-    success { echo 'Deployed. Open the EC2 public IP in your browser.' }
+    success { echo 'Deployed. Open the URL printed in the Verify stage.' }
     failure { echo 'Pipeline failed. Check the stage logs above.' }
   }
 }
