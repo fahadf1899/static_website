@@ -45,7 +45,7 @@ pipeline {
 
     stage('Deploy Website') {
       steps {
-        sshagent(credentials: ['ec2-ssh-key']) {
+        sshagent(credentials: ['my-server-key.pem']) {
           sh '''
             IP=$(terraform -chdir=terraform output -raw public_ip)
             OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5"
