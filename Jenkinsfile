@@ -44,7 +44,7 @@ pipeline {
     }
     stage('Deploy Website') {
       steps {
-        withCredentials([sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'SSH_KEY')]) {
+           withCredentials([file(credentialsId: 'ec2-key-file', variable: 'SSH_KEY')]) { {
           sh '''
             IP=$(terraform -chdir=terraform output -raw public_ip)
             OPTS="-i $SSH_KEY -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5"
