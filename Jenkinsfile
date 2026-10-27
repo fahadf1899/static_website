@@ -43,43 +43,37 @@ pipeline {
       steps { dir('terraform') { sh 'terraform apply -input=false -auto-approve tfplan' } }
     }
     stage('Deploy Website') {
-    steps {
-        withCredentials([
-            sshUserPrivateKey(
-                credentialsId: 'ec2-ssh-key',
-                keyFileVariable: 'SSH_KEY',
-                usernameVariable: 'SSH_USER'
-            )
-        ]) {
-            sh '''
-                set -eu
+  steps {
+    withCredentials([
+      sshUserPrivateKey(
+        credentialsId: 'ec2-ssh-key',
+        keyFileVariable: 'SSH_KEY',
+        usernameVariable: 'SSH_USER'
+      )
+    ]) {
+      sh '''
+        set -eu
 
-                IP=$(terraform -chdir=terraform output -raw public_ip)
+        IP=$(terraform -chdir=terraform output -raw public_ip)
+        SSH_OPTS="-i $SSH_KEY -o BatchMode=yes -o StrictHostKeyChecking=no"
 
-                chmod 600 "$SSH_KEY"
+        chmod 600 "$SSH_KEY"
+        ssh-keygen -y -f "$SSH_KEY" > /dev/null
 
-                ssh-keygen -y -f "$SSH_KEY" > /dev/null
+        # Wait for cloud-init (nginx install) to finish
+        ssh $SSH_OPTS "$SSH_USER@$IP" 'cloud-init status --wait'
 
-                ssh -i "$SSH_KEY" \
-                    -o BatchMode=yes \
-                    -o StrictHostKeyChecking=no \
-                    "$SSH_USER@$IP" \
-                    'cloud-init status --wait'
+        # Make sure the target dir exists, then copy
+        ssh $SSH_OPTS "$SSH_USER@$IP" 'mkdir -p /tmp/site'
+        scp $SSH_OPTS -r website/. "$SSH_USER@$IP:/tmp/site/"
 
-                scp -i "$SSH_KEY" \
-                    -o StrictHostKeyChecking=no \
-                    -r website/. "$SSH_USER@$IP:/tmp/site/"
-
-                ssh -i "$SSH_KEY" \
-                    -o StrictHostKeyChecking=no \
-                    "$SSH_USER@$IP" \
-                    'sudo cp -r /tmp/site/. /var/www/html/ &&
-                     sudo systemctl reload nginx'
-            '''
-        }
+        # Move into web root and reload nginx
+        ssh $SSH_OPTS "$SSH_USER@$IP" \
+          'sudo cp -r /tmp/site/. /var/www/html/ && sudo systemctl reload nginx'
+      '''
     }
+  }
 }
-
     stage('Verify') {
       steps {
         sh '''
