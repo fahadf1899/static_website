@@ -43,30 +43,42 @@ pipeline {
       steps { dir('terraform') { sh 'terraform apply -input=false -auto-approve tfplan' } }
     }
     stage('Deploy Website') {
-      steps {
-           withCredentials([file(credentialsId: 'ec2-key-file', variable: 'SSH_KEY')]) { {
-          sh '''
-            IP=$(terraform -chdir=terraform output -raw public_ip)
-            OPTS="-i $SSH_KEY -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5"
-            SSH="ssh $OPTS ubuntu@$IP"
+    steps {
+        withCredentials([
+            sshUserPrivateKey(
+                credentialsId: 'ec2-ssh-key',
+                keyFileVariable: 'SSH_KEY',
+                usernameVariable: 'SSH_USER'
+            )
+        ]) {
+            sh '''
+                set -eu
 
-            # 1. wait for SSH to come up
-            for i in $(seq 1 30); do
-              $SSH 'true' && break
-              echo "Waiting for SSH... ($i)"; sleep 10
-            done
+                IP=$(terraform -chdir=terraform output -raw public_ip)
 
-            # 2. wait for first-boot setup (nginx install) to finish
-            $SSH 'cloud-init status --wait'
+                chmod 600 "$SSH_KEY"
 
-            # 3. copy files and move them into the web root
-            $SSH 'rm -rf /tmp/site && mkdir -p /tmp/site'
-            scp $OPTS -r website/. ubuntu@$IP:/tmp/site/
-            $SSH 'sudo cp -r /tmp/site/. /var/www/html/ && sudo systemctl reload nginx'
-          '''
+                ssh-keygen -y -f "$SSH_KEY" > /dev/null
+
+                ssh -i "$SSH_KEY" \
+                    -o BatchMode=yes \
+                    -o StrictHostKeyChecking=no \
+                    "$SSH_USER@$IP" \
+                    'cloud-init status --wait'
+
+                scp -i "$SSH_KEY" \
+                    -o StrictHostKeyChecking=no \
+                    -r website/. "$SSH_USER@$IP:/tmp/site/"
+
+                ssh -i "$SSH_KEY" \
+                    -o StrictHostKeyChecking=no \
+                    "$SSH_USER@$IP" \
+                    'sudo cp -r /tmp/site/. /var/www/html/ &&
+                     sudo systemctl reload nginx'
+            '''
         }
-      }
     }
+}
 
     stage('Verify') {
       steps {
